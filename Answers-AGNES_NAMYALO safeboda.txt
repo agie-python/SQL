@@ -1,0 +1,56 @@
+--AGNES NAMYALO 
+--ANSWERS FOR SQL INTERVIEW.
+------------------------------------------------------------------------------
+--------------ANSWERS---------------------------------------------------------
+------------------------------------------------------------------------------
+
+----Changing timestamp columns from Utc to est
+ALTER TABLE rides
+ALTER COLUMN inserted_at TYPE timestamp;
+
+update rides
+SET droppedoff_at = (droppedoff_at ::timestamp AT TIME ZONE 'UTC') AT TIME ZONE 'est';
+
+update rides
+SET inserted_at = (inserted_at ::timestamp AT TIME ZONE 'UTC') AT TIME ZONE 'est';
+
+update payments
+SET inserted_at = (inserted_at ::timestamp AT TIME ZONE 'UTC') AT TIME ZONE 'est';
+
+select *from rides
+limit 5;
+
+select *from payments
+limit 5;
+
+--1
+--How many completed rides were there in Nairobi there on October 11th in 2019?
+SELECT COUNT(id) as Question_1
+FROM rides
+WHERE city_id='2' AND droppedoff_at LIKE '%2019-10-11%';
+
+--2
+--How many unique passengers completed rides in Nairobi on October 11th 2019?
+SELECT Distinct COUNT(passenger_id) as Question_2
+FROM rides
+WHERE city_id='2' AND droppedoff_at LIKE '%2019-10-11%';
+
+--3
+--How many completed rides were there in Nairobi on October 11th where at least some
+--part of the trip was paid using SafeBoda cashless credit?
+select COUNT(rides.id) as Question_3
+from rides
+JOIN payments
+ON rides.id = payments.ride_id
+WHERE (city_id='2' AND droppedoff_at LIKE '%2019-10-11%') AND payment_type NOT IN ('cash');
+
+--4
+--How many unique passengers paid some of their ride using cashless on October 11th
+--2019 in Nairobi?
+SELECT Distinct COUNT(passenger_id) as Question_4
+FROM rides
+JOIN payments
+ON rides.id = payments.ride_id
+WHERE (city_id='2' AND droppedoff_at LIKE '%2019-10-11%') AND payment_type = 'credit';
+
+

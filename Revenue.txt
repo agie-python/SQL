@@ -1,0 +1,289 @@
+select * from practice_Opportunities_Data
+
+--selecting particular columns
+select New_Account_No, Product_Category from practice_Opportunities_Data
+
+--Having one conition, using the = using where
+select * from practice_Opportunities_Data where Product_Category = 'Services'  --put servicesinto quotes because it is a value within acolumn
+
+--Having one conition, using the <>(not equals) using where
+select * from practice_Opportunities_Data where Opportunity_Stage <> 'Stage - 0' 
+
+--if i need to specify another value of a column in the where clause,then i will use the IN 
+select * from practice_Opportunities_Data where Opportunity_Stage IN ('Stage - 0','Stage - 1') 
+
+--Using NOT IN
+select * from practice_Opportunities_Data where Opportunity_Stage NOT IN ('Stage - 0','Stage - 1') 
+
+--Using LIKE
+select * from practice_Opportunities_Data where New_Opportunity_Name LIKE '%Phase - 1%'  --choosing those values with values which start with phase 1
+
+--Using NOT LIKE
+select * from practice_Opportunities_Data where New_Opportunity_Name NOT LIKE '%Phase - 1%' 
+
+--Using and
+select * from practice_Opportunities_Data where Product_Category = 'Services' AND Opportunity_Stage = 'Stage - 0'
+
+--Using OR
+select * from practice_Opportunities_Data where Product_Category = 'Services' OR Opportunity_Stage = 'Stage - 0'
+
+--Using both AND /  OR
+select * from practice_Opportunities_Data where (Product_Category = 'Services' AND Opportunity_Stage = 'Stage - 0') OR New_Opportunity_Name LIKE '%Phase - 7%' 
+
+--Using < or >
+select * from practice_Opportunities_Data where Est_Opportunity_Value > 50000
+
+-- Using  between
+select * from practice_Opportunities_Data where Est_Opportunity_Value between 10000 and 50000
+
+---------------------------------------------------------------------------------------------------------
+------------------------WHERE CLAUSE WITH SUB_QUERIES----------------------------------------------------
+---------------------------------------------------------------------------------------------------------
+
+---choosing data from twotables,soyou need to have a column that connects the two to eachother
+Select * from practice_account_lookup
+
+select * from practice_Opportunities_Data where New_Account_No IN (select * from practice_account_lookup where sector='banking')   --cant work when choosing more than one column in IN
+----So i specify the column like New_Account_No
+
+select * from practice_Opportunities_Data where New_Account_No IN (select New_Account_No from practice_account_lookup where sector='banking') --it selects opportunities with the banking sector
+
+select * from practice_Opportunities_Data
+Select * from practice_Calendar_lookup
+---Always first look out for the common columns eg i will use month id
+
+-- choosing opportunities with the fiscal year FY20
+select * from practice_Opportunities_Data where Est_Completion_Month_ID in (select Distinct Month_ID from practice_Calendar_lookup where Fiscal_Year='FY20')
+
+--Adding anothercondition in the collected data i.e another sub-sub query
+select * from practice_Opportunities_Data where Est_Completion_Month_ID in (select Distinct Month_ID from practice_Calendar_lookup where Fiscal_Year='FY20') AND Est_Opportunity_Value > 50000
+
+SELECT * from practice_Opportunities_Data
+
+select New_Account_No, Opportunity_ID, New_Opportunity_Name,Est_Completion_Month_ID, IIF(Product_Category = 'Services','Services & Marketing', Product_Category) AS Product_Category,
+Opportunity_Stage, Est_Opportunity_Value FROM practice_Opportunities_Data  --changing the word services to services &marketing in theproduct category column
+
+-- multiple if statement in a new column
+SELECT * from practice_account_lookup
+SELECT *,IIF(Sector = 'Capital Markets/Securities','Capital Markets', Sector) AS Sector2 from practice_account_lookup
+--creating a new column but replacing thecapitalmarketing/securities as capital markets
+--but this doesnot update the original table
+
+----Advanced queries
+select * from practice_Revenue_Raw_Data
+
+select * from practice_Marketing_Raw_Data
+
+select * from practice_Targets_Raw_Data
+
+select * from practice_Opportunities_Data
+
+Select * from practice_Calendar_lookup
+
+Select * from practice_account_lookup
+
+
+--NESTED QUERIES
+--What is the total revenue of the company this year? fy21
+--You notice these are from  different table so you will need a column which connects them up
+
+Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21'
+
+select SUM (Revenue) AS Total_revenue_FY21 from [dbo].[practice_Revenue_Raw_Data]
+WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21')
+
+--What is the total revenue by monthh\
+select Month_ID, SUM (Revenue) AS Total_revenue_FY21 from [dbo].[practice_Revenue_Raw_Data]
+WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21')
+GROUP BY Month_ID
+
+
+--What is the total perfomance of revenue YoY? comparing 2020 with 2021
+
+
+SELECT a.Total_revenue_FY21 , b.Total_revenue_FY20 , a.Total_revenue_FY21 - b.Total_revenue_FY20 AS Dollar_Dif_YoY, a.Total_revenue_FY21/b.Total_revenue_FY20-1AS Percent_Dif_YoY
+FROM
+	(
+	--FY21
+	select --Month_ID,
+	SUM (Revenue) AS Total_revenue_FY21 from [dbo].[practice_Revenue_Raw_Data]
+	WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21')
+	--GROUP BY Month_ID
+	) a,
+	(
+	--FY20
+	select SUM (Revenue) AS Total_revenue_FY20 from [dbo].[practice_Revenue_Raw_Data]
+	WHERE month_id IN (select Distinct month_id -12 from [dbo].[practice_Revenue_Raw_Data]
+	WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21'))
+	) b
+
+
+
+--since i dont want to compare 12 months with 6 months,so i wwill get the 6 monthsfor 2021 and then subtract off the 12 to get for 2020
+select Distinct month_id -12 from [dbo].[practice_Revenue_Raw_Data]
+WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21')
+
+
+--What is the MoM revenue performance
+SELECT Total_revenue_TM , Total_revenue_LM , Total_revenue_TM - Total_revenue_LM AS Dollar_Dif_MoM
+FROM
+    (
+  --This month
+select --Month_ID,
+	SUM (Revenue) AS Total_revenue_TM from [dbo].[practice_Revenue_Raw_Data]
+	WHERE month_id IN (Select MAX (month_id) from [dbo].[practice_Revenue_Raw_Data])
+	--GROUP BY Month_ID
+	)a,
+    (
+   --This last month
+select --Month_ID,
+	SUM (Revenue) AS Total_revenue_LM from [dbo].[practice_Revenue_Raw_Data]
+	WHERE month_id IN (Select MAX (month_id)-1 from [dbo].[practice_Revenue_Raw_Data])
+	--GROUP BY Month_ID
+	)b
+
+--What is the total revenue Vs target performance for the year
+--total reveue performance 
+
+SELECT Total_revenue_FY21 , Target_FY21 , Total_revenue_FY21-Target_FY21 AS Dollar_Diff
+FROM
+     (
+select --Month_ID,
+	SUM (Revenue) AS Total_revenue_FY21 from [dbo].[practice_Revenue_Raw_Data]
+	WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21')
+	--GROUP BY Month_ID
+	 )a,
+	 (
+--target performance 
+select --Month_ID, 
+SUM (Target) AS Target_FY21 from practice_Targets_Raw_Data
+WHERE month_id IN (select Distinct month_id from [dbo].[practice_Revenue_Raw_Data]
+WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21'))
+--GROUP BY Month_ID
+     )b
+
+
+select Distinct month_id -12 from [dbo].[practice_Revenue_Raw_Data]
+WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21')
+
+
+---What is the total revenue Vs target performance PER MONTH
+--Using a left join since the months are not of the same number
+SELECT a.Month_ID, Target_FY21 , Total_revenue_FY21-Target_FY21 AS Dollar_Diff
+FROM
+     (
+select Month_ID,
+	SUM (Revenue) AS Total_revenue_FY21 from [dbo].[practice_Revenue_Raw_Data]
+	WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21')
+	GROUP BY Month_ID
+	 )a
+	 LEFT JOIN
+	 (
+--target performance 
+select Month_ID, 
+SUM (Target) AS Target_FY21 from practice_Targets_Raw_Data
+WHERE month_id IN (select Distinct month_id from [dbo].[practice_Revenue_Raw_Data]
+WHERE month_id IN (Select Distinct month_id from practice_Calendar_lookup WHERE Fiscal_Year = 'FY21'))
+GROUP BY Month_ID
+     )b
+	 ON a.Month_ID = b.Month_ID
+ORDER BY a.Month_ID
+---------------------------------------------------------------------------------------
+
+SELECT a.id, COUNT(id),b.ride_id
+FROM
+     (
+select id,
+	 from rides
+	WHERE city_id='2' AND droppedoff_at LIKE '%2019-10-11%'
+	GROUP BY id
+	 )a
+	 LEFT JOIN
+	 (-
+select Distinct ride_id, 
+from payments where payment_type NOT IN ('cash')
+GROUP BY ride_id
+     )b
+	 ON a.id = b.ride_id
+ORDER BY a.id
+------------------------------------------------------------------------------
+(SELECT COUNT(id),id 
+FROM rides 
+WHERE city_id='2' AND droppedoff_at LIKE '%2019-10-11%'
+  UNION 
+(select Distinct ride_id from payments where payment_type NOT IN ('cash')
+  (WHERE rides.id = payments.ride_id))
+GROUP BY ride_id;
+
+
+--------------------------------------------------------------------------------------------------------
+-----------------------------JOINS----------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
+
+---LEFT JOIN
+
+
+---GENERAL RULES
+
+--We need to select the columns from the the 2 ormore tables that we are going to join
+--Identify the column that are identical that are identical in each column so that we can jopin them
+--we need to specify on top which columns do we need from each table
+_
+
+select * from practice_Opportunities_Data
+
+Select * from practice_account_lookup
+
+SELECT a.*, b.New_Account_Name,b.Industry ---specifying the columns i need from each table, i need all for a
+FROM
+	(
+	SELECT New_Account_No, Opportunity_ID,New_Opportunity_Name,Est_Completion_Month_ID, Product_Category, Opportunity_Stage, Est_Opportunity_Value from practice_Opportunities_Data
+	)a  --4133 rows
+	LEFT JOIN
+	(
+	SELECT New_Account_No,New_Account_Name, Industry from practice_account_lookup
+	)b  --1145 rows
+	ON a.New_Account_No = b.New_Account_No    --specifying the column which joins them
+
+---left join means it keeps all the data in table a and the table am left joining will only keep that data from that table that exists in table a, so if there are accounts/rows intable b that have no opportunity in table a they will not come up
+---so in left join we should only have number of rowswe have in table a
+
+OR
+SELECT a.*, b.New_Account_Name,b.Industry FROM practice_Opportunities_Data a
+LEFT JOIN practice_account_lookup b
+ON a.New_Account_No = b.New_Account_No
+
+
+---FULL JOIN
+SELECT a.*, b.New_Account_Name,b.Industry ---specifying the columns i need from each table, i need all for a
+FROM
+	(
+	SELECT New_Account_No, Opportunity_ID,New_Opportunity_Name,Est_Completion_Month_ID, Product_Category, Opportunity_Stage, Est_Opportunity_Value from practice_Opportunities_Data
+	)a  --4133 rows
+	FULL JOIN
+	(
+	SELECT New_Account_No,New_Account_Name, Industry from practice_account_lookup
+	)b  --1145 rows
+	ON a.New_Account_No = b.New_Account_No    --specifying the column which joins them
+
+
+
+
+
+	SELECT a.id, COUNT(id), b.ride_id
+FROM
+     (
+     select id
+	 from rides
+	 WHERE city_id='2' AND droppedoff_at LIKE '%2019-10-11%'
+	 GROUP BY a.id
+	 )a
+	 LEFT JOIN
+	 (
+     select Distinct ride_id 
+     from payments where payment_type NOT IN ('cash')
+     GROUP BY ride_id
+     )b
+	 ON a.id = b.ride_id
+ORDER BY a.id;
+ 

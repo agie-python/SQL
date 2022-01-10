@@ -1,0 +1,108 @@
+/* creating a tale and doing some modifications */
+CREATE TABLE student (
+	student_id INT PRIMARY KEY,
+	name VARCHAR(20) NOT NULL,
+	major VARCHAR(20)
+);
+ALTER TABLE student ADD gpa DECIMAL (3,2);  /* adding a new column */
+DESCRIBE student; /* showing details of the table */
+ALTER TABLE student DROP COLUMN gpa; /* modifying the table and then deleting a column */
+
+
+/* inserting dat into the table */
+INSERT INTO student VALUES (1, 'Jack', 'Biology'); /* strings should b in quotes */
+INSERT INTO student VALUES (2, 'Kate', 'Sociology'); 
+INSERT INTO student (student_id, name)VALUES (3, 'Claire'); /* this leaves the other unmentioned column blank and it shows null*/
+INSERT INTO student VALUES (4, 'Jack', 'Biology');
+INSERT INTO student VALUES (5, 'Mike', 'Computer Science'); 
+
+
+
+/* updating a table, chaanging a value to another name */
+
+/*UPDATE student */
+/*set major = 'Bio';   this sets all the major of students to Bio*/
+
+
+UPDATE student
+set major = 'Bio'
+WHERE major = 'Biology';  /* this sets the major with Biology to Bio */
+
+UPDATE student
+set major = 'Comp sci'
+WHERE student_id = 4;  /* this sets the major with Biology to Bio */
+
+UPDATE student
+set major = 'Math'
+WHERE student_id = 3;  /* this sets the major with Biology to Bio */
+
+UPDATE student
+set major = 'Biomath'
+WHERE major = 'Bio' OR major = 'Math';  /* combining two majors together*/
+
+/* setting two things at ago */
+
+UPDATE student
+set name = 'TOM', major = 'Undecided'
+WHERE student_id = 1;  /* combining two majors together*/
+
+
+/* DELETING ROWS FROM THE TABLE, specific rows */
+
+DELETE FROM student
+WHERE student_id = 5;
+
+/* BASIC QUERIES, getting data from the database  */
+
+
+--SELECT * FROM student;  /* displays content in the table */
+
+/* Doing queries using the select ,to get somequeries */
+ SELECT name,major FROM student;    /* selecting different columns from the database */
+ 
+ SELECT student.name, student.major  /* selecting different columns from the database but by specifying the table ti get it from */
+ FROM student;
+ 
+SELECT student.name, student.major  /* selecting different columns from the database but by specifying the table ti get it from and ordering by a column which is name in ascending*/
+ FROM student
+ ORDER BY name;
+ 
+ SELECT student.name, student.major  /* ordering by a column which is not called */
+ FROM student
+ ORDER BY student_id DESC;
+ 
+ /* ordering by different columns */
+ SELECT * FROM student
+ ORDER BY major, student_id;  /* ordering by major first, if there some with same major,then they will ordered by student_id in ascending*/
+ 
+ 
+ /* specifying the number of columns */
+  SELECT * FROM student
+  ORDER BY student_id
+  LIMIT 2;
+ 
+
+ /* filtering but returning different columns */
+
+ SELECT name, major    /* returning only name and major */
+ FROM student
+ WHERE major = 'Sociology' OR major = 'Biomath';
+ 
+ /* filtering but returning different columns */
+ SELECT name, student_id   /* returning only name and major */
+ FROM student
+ WHERE student_id <3 AND name <> 'Kate';
+
+ 
+  /* filtering using the IN operator */
+ SELECT name, student_id   /* returning only name and major */
+ FROM student
+ WHERE student_id <3 AND name <> 'Kate';
+ 
+  SELECT * FROM student
+  WHERE name IN ('TOM','Kate');
+  
+
+
+
+
